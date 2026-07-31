@@ -1,0 +1,11 @@
+# Local workspace configuration (do not commit)
+# Each developer sets their own values here.
+
+.cortex/workspace.env
+.cortex/target-env
+
+# Developer test scripts (local, per-issue)
+tests/
+
+# DCM output artifacts
+dcm/output/

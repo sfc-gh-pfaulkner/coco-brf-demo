@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|snowflake_.*|mcp__github__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .cortex/hooks/target_guard.py",
+            "timeout": 10,
+            "enabled": true
+          }
+        ]
+      }
+    ]
+  }
+}
