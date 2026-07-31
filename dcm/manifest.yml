@@ -1,0 +1,18 @@
+manifest_version: 2
+
+type: DCM_PROJECT
+
+default_target: WIP
+
+targets:
+  WIP:
+    account_identifier: SFPSCOGS-FCRICKDEMO
+    project_name: WIP_1_BRF_CORE_DB.DCM.BRF_CORE_PROJECT
+    project_owner: DEV_BRF_SYSADMIN
+    templating_config: WIP
+
+templating:
+  configurations:
+    WIP:
+      db: WIP_1_BRF_CORE_DB
+      source_stage_db: DEV_BRF_CORE_DB
