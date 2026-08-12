@@ -1,4 +1,4 @@
-name: Deploy to PREPROD (PRODACC)
+name: Deploy to PREPROD (PRODACC) + DEV base (DEVACC)
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - 'preprod/**-PREPROD'
 
 jobs:
-  deploy:
+  deploy-preprod-clone:
     uses: sfc-gh-pfaulkner/snowflake-rbac-framework/.github/workflows/deploy-to-clone.yml@main
     with:
       clone_type: PREPROD
@@ -20,3 +20,13 @@ jobs:
       SNOWFLAKE_ACCOUNT: ${{ secrets.PROD_ACCOUNT }}
       SNOWFLAKE_USER: ${{ secrets.PROD_USER }}
       SNOWFLAKE_PRIVATE_KEY: ${{ secrets.PROD_PRIVATE_KEY }}
+
+  deploy-to-dev:
+    needs: deploy-preprod-clone
+    uses: sfc-gh-pfaulkner/snowflake-rbac-framework/.github/workflows/deploy-to-base.yml@main
+    with:
+      dcm_target: DEV
+    secrets:
+      SNOWFLAKE_ACCOUNT: ${{ secrets.DEV_ACCOUNT }}
+      SNOWFLAKE_USER: ${{ secrets.DEV_USER }}
+      SNOWFLAKE_PRIVATE_KEY: ${{ secrets.DEV_PRIVATE_KEY }}
