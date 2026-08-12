@@ -5,49 +5,18 @@ on:
     branches:
       - 'test/**-TEST'
 
-env:
-  SNOWFLAKE_ACCOUNT: ${{ secrets.DEV_ACCOUNT }}
-  SNOWFLAKE_USER: ${{ secrets.DEV_USER }}
-  SNOWFLAKE_PRIVATE_KEY: ${{ secrets.DEV_PRIVATE_KEY }}
-
 jobs:
-  deploy-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install SnowCLI
-        uses: Snowflake-Labs/snowflake-cli-action@v1
-
-      - name: Extract issue ID from branch
-        id: extract
-        run: |
-          BRANCH="${GITHUB_REF_NAME}"
-          ISSUE_ID=$(echo "$BRANCH" | sed -E 's|test/([0-9]+)-.*|\1|')
-          echo "issue_id=$ISSUE_ID" >> "$GITHUB_OUTPUT"
-          echo "clone_db=TEST_${ISSUE_ID}_BRF_CORE_DB" >> "$GITHUB_OUTPUT"
-
-      - name: Create TEST clone
-        run: |
-          snow sql -q "USE ROLE DEV_BRF_ETL; USE WAREHOUSE BRF_WH; CALL ADMIN_DB.DEPLOY.DEPLOY_CLONE('${{ steps.extract.outputs.issue_id }}', 'DEV', 'BRF', 'CORE', 'TEST');" \
-            --account "$SNOWFLAKE_ACCOUNT" \
-            --user "$SNOWFLAKE_USER" \
-            --authenticator SNOWFLAKE_JWT \
-            --private-key-path <(echo "$SNOWFLAKE_PRIVATE_KEY")
-
-      - name: Patch manifest to target TEST clone
-        run: |
-          CLONE_DB="${{ steps.extract.outputs.clone_db }}"
-          sed -i "s|project_name: DEV_BRF_CORE_DB.DCM.BRF_CORE_PROJECT|project_name: ${CLONE_DB}.DCM.BRF_CORE_PROJECT|" dcm/manifest.yml
-          sed -i "s|db: DEV_BRF_CORE_DB|db: ${CLONE_DB}|" dcm/manifest.yml
-          sed -i "s|source_stage_db: DEV_BRF_CORE_DB|source_stage_db: ${CLONE_DB}|" dcm/manifest.yml
-          echo "Deploying to: ${CLONE_DB}"
-          cat dcm/manifest.yml
-
-      - name: Deploy DCM to TEST clone
-        run: |
-          snow dcm deploy --target DEV \
-            --account "$SNOWFLAKE_ACCOUNT" \
-            --user "$SNOWFLAKE_USER" \
-            --authenticator SNOWFLAKE_JWT \
-            --private-key-path <(echo "$SNOWFLAKE_PRIVATE_KEY")
+  deploy:
+    uses: sfc-gh-pfaulkner/snowflake-rbac-framework/.github/workflows/deploy-to-clone.yml@main
+    with:
+      clone_type: TEST
+      environment: DEV
+      domain: BRF
+      db_name: CORE
+      dcm_target: DEV
+      role: DEV_BRF_ETL
+      warehouse: BRF_WH
+    secrets:
+      SNOWFLAKE_ACCOUNT: ${{ secrets.DEV_ACCOUNT }}
+      SNOWFLAKE_USER: ${{ secrets.DEV_USER }}
+      SNOWFLAKE_PRIVATE_KEY: ${{ secrets.DEV_PRIVATE_KEY }}

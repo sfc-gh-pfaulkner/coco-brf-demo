@@ -5,46 +5,16 @@ on:
     branches:
       - main
 
-env:
-  SNOWFLAKE_ACCOUNT: ${{ secrets.PROD_ACCOUNT }}
-  SNOWFLAKE_USER: ${{ secrets.PROD_USER }}
-  SNOWFLAKE_PRIVATE_KEY: ${{ secrets.PROD_PRIVATE_KEY }}
-
 jobs:
-  deploy-prod:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install SnowCLI
-        uses: Snowflake-Labs/snowflake-cli-action@v1
-
-      - name: Deploy DCM to PROD
-        run: |
-          snow dcm deploy --target PROD \
-            --account "$SNOWFLAKE_ACCOUNT" \
-            --user "$SNOWFLAKE_USER" \
-            --authenticator SNOWFLAKE_JWT \
-            --private-key-path <(echo "$SNOWFLAKE_PRIVATE_KEY")
-
-      - name: Extract issue ID from merge commit
-        id: extract
-        run: |
-          # Extract issue ID from the merged branch name in the merge commit message
-          MERGE_MSG=$(git log -1 --pretty=%s)
-          ISSUE_ID=$(echo "$MERGE_MSG" | grep -oE '[0-9]+' | head -1)
-          echo "issue_id=$ISSUE_ID" >> "$GITHUB_OUTPUT"
-
-      - name: Cleanup UAT and PREPROD clones
-        if: steps.extract.outputs.issue_id != ''
-        run: |
-          snow sql -q "USE ROLE PROD_BRF_ETL; USE WAREHOUSE BRF_WH; CALL ADMIN_DB.DEPLOY.DROP_CLONE('${{ steps.extract.outputs.issue_id }}', 'PROD', 'BRF', 'CORE', 'UAT');" \
-            --account "$SNOWFLAKE_ACCOUNT" \
-            --user "$SNOWFLAKE_USER" \
-            --authenticator SNOWFLAKE_JWT \
-            --private-key-path <(echo "$SNOWFLAKE_PRIVATE_KEY") || true
-          snow sql -q "USE ROLE PROD_BRF_ETL; USE WAREHOUSE BRF_WH; CALL ADMIN_DB.DEPLOY.DROP_CLONE('${{ steps.extract.outputs.issue_id }}', 'PROD', 'BRF', 'CORE', 'PREPROD');" \
-            --account "$SNOWFLAKE_ACCOUNT" \
-            --user "$SNOWFLAKE_USER" \
-            --authenticator SNOWFLAKE_JWT \
-            --private-key-path <(echo "$SNOWFLAKE_PRIVATE_KEY") || true
+  deploy:
+    uses: sfc-gh-pfaulkner/snowflake-rbac-framework/.github/workflows/deploy-to-prod.yml@main
+    with:
+      domain: BRF
+      db_name: CORE
+      dcm_target: PROD
+      role: PROD_BRF_SYSADMIN
+      warehouse: BRF_WH
+    secrets:
+      SNOWFLAKE_ACCOUNT: ${{ secrets.PROD_ACCOUNT }}
+      SNOWFLAKE_USER: ${{ secrets.PROD_USER }}
+      SNOWFLAKE_PRIVATE_KEY: ${{ secrets.PROD_PRIVATE_KEY }}
