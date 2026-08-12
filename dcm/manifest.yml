@@ -1,0 +1,28 @@
+manifest_version: 2
+
+type: DCM_PROJECT
+
+default_target: DEV
+
+targets:
+  DEV:
+    account_identifier: DEVACC
+    project_name: DEV_BRF_CORE_DB.DCM.BRF_CORE_PROJECT
+    project_owner: DEV_BRF_SYSADMIN
+    templating_config: DEV
+  PROD:
+    account_identifier: PRODACC
+    project_name: PROD_BRF_CORE_DB.DCM.BRF_CORE_PROJECT
+    project_owner: PROD_BRF_SYSADMIN
+    templating_config: PROD
+
+templating:
+  configurations:
+    DEV:
+      db: DEV_BRF_CORE_DB
+      source_stage_db: DEV_BRF_CORE_DB
+      wh: BRF_WH
+    PROD:
+      db: PROD_BRF_CORE_DB
+      source_stage_db: PROD_BRF_CORE_DB
+      wh: BRF_WH
